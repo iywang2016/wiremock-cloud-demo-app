@@ -1,3 +1,4 @@
+
 import mocklab.build.GithubReleasePublishTask
 import mocklab.build.HerokuFatJarDeployTask
 
@@ -6,7 +7,10 @@ plugins {
     id 'io.spring.dependency-management' version '1.0.9.RELEASE'
     id 'java'
     id "net.foragerr.jmeter" version "1.1.0-4.0"
+    id 'org.checkerframework' version '0.6.45'
 }
+
+apply plugin: 'org.checkerframework'
 
 group = 'io.mocklab'
 version =  '1'
@@ -40,6 +44,16 @@ dependencies {
     testCompile('org.assertj:assertj-core:3.22.0')
 }
 
+// To use a locally-built Checker Framework, run gradle with "-PcfLocal".
+if (project.hasProperty("cfLocal")) {
+    def cfHome = String.valueOf(System.getenv("CHECKERFRAMEWORK"))
+    dependencies {
+        compileOnly files(cfHome + "/checker/dist/checker-qual.jar")
+        testCompileOnly files(cfHome + "/checker/dist/checker-qual.jar")
+        checkerFramework files(cfHome + "/checker/dist/checker.jar")
+    }
+}
+
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
@@ -52,7 +66,7 @@ bootJar {
 
 
 def tag = System.getenv('CIRCLE_SHA1') ? "circle-${System.getenv('CIRCLE_BRANCH')}-${System.getenv('CIRCLE_SHA1')}" :
-    (System.getenv('TAG') ?: "${InetAddress.localHost.hostName}-${System.currentTimeMillis()}")
+        (System.getenv('TAG') ?: "${InetAddress.localHost.hostName}-${System.currentTimeMillis()}")
 
 def REPO_NAME = 'mocklab-demo-app'
 
